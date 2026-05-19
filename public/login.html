@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弹性球 · 黑洞穿越</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:#080816;font-family:system-ui,sans-serif;overflow:hidden}
+  .bg{position:fixed;inset:0;pointer-events:none}
+  canvas{display:block}
+  .card{position:relative;z-index:10;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:44px 36px;width:380px;max-width:92vw;backdrop-filter:blur(20px)}
+  .card h1{color:#fff;font-size:26px;font-weight:200;letter-spacing:4px;text-align:center;margin-bottom:4px}
+  .card .sub{color:rgba(255,255,255,0.18);font-size:11px;letter-spacing:2px;text-align:center;margin-bottom:28px}
+  .tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid rgba(255,255,255,0.06)}
+  .tab{flex:1;text-align:center;padding:10px 0;cursor:pointer;color:rgba(255,255,255,0.25);font-size:13px;letter-spacing:2px;transition:all .25s;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none}
+  .tab.active{color:#fff;border-bottom-color:#4488ff}
+  .tab:hover:not(.active){color:rgba(255,255,255,0.5)}
+  .form{display:none}
+  .form.active{display:block}
+  .field{margin-bottom:16px}
+  .field label{display:block;color:rgba(255,255,255,0.3);font-size:11px;letter-spacing:1px;margin-bottom:6px}
+  .field input{width:100%;padding:11px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:7px;color:#fff;font-size:14px;outline:none;transition:border .25s}
+  .field input:focus{border-color:rgba(255,255,255,0.25)}
+  .btn{width:100%;padding:12px;border:none;border-radius:7px;cursor:pointer;font-size:14px;letter-spacing:2px;color:#fff;background:#4488ff;transition:all .25s;margin-top:6px}
+  .btn:hover{background:#5599ff;transform:translateY(-1px)}
+  .btn:disabled{opacity:0.4;cursor:not-allowed}
+  .msg{text-align:center;font-size:12px;margin-top:14px;min-height:18px}
+  .msg.error{color:#ff5555}
+  .msg.ok{color:#44dd66}
+  .admin-link{text-align:center;margin-top:18px}
+  .admin-link a{color:rgba(255,255,255,0.15);font-size:11px;text-decoration:none;letter-spacing:1px;transition:color .2s}
+  .admin-link a:hover{color:rgba(255,255,255,0.4)}
+</style>
+</head>
+<body>
+<div class="bg"><canvas id="bgCanvas"></canvas></div>
+<div class="card">
+  <h1>弹性球 · 黑洞穿越</h1>
+  <div class="sub">BOUNCE THROUGH THE VOID</div>
+  <div class="tabs">
+    <button class="tab active" data-tab="login">登录</button>
+    <button class="tab" data-tab="register">注册</button>
+  </div>
+  <div class="form active" id="form-login">
+    <div class="field"><label>用户名</label><input type="text" id="l-user" placeholder="输入用户名"></div>
+    <div class="field"><label>密码</label><input type="password" id="l-pass" placeholder="输入密码"></div>
+    <button class="btn" id="btn-login">登 录</button>
+    <div class="msg" id="msg-login"></div>
+  </div>
+  <div class="form" id="form-register">
+    <div class="field"><label>用户名</label><input type="text" id="r-user" placeholder="设置用户名"></div>
+    <div class="field"><label>邮箱</label><input type="email" id="r-email" placeholder="your@email.com"></div>
+    <div class="field"><label>密码</label><input type="password" id="r-pass" placeholder="至少4位密码"></div>
+    <button class="btn" id="btn-register">注 册</button>
+    <div class="msg" id="msg-register"></div>
+  </div>
+  <div class="admin-link"><a href="/admin">管理员入口</a></div>
+</div>
+
+<script>
+// ─── Background stars ───
+(function(){
+  const c=document.getElementById('bgCanvas'),ctx=c.getContext('2d');
+  let w,h,stars=[];
+  function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+  resize();window.addEventListener('resize',resize);
+  for(let i=0;i<200;i++)stars.push({x:Math.random()*2000,y:Math.random()*2000,r:Math.random()*1.5+.3,s:Math.random()*.3+.1});
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    for(const s of stars){
+      ctx.beginPath();ctx.arc(s.x%w,s.y%h,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,255,${s.s})`;ctx.fill();
+      s.y+=s.s*.4;if(s.y>h+5){s.y=-5;s.x=Math.random()*w}
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ─── Tabs ───
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.querySelectorAll('.form').forEach(x=>x.classList.remove('active'));
+    document.getElementById('form-'+t.dataset.tab).classList.add('active');
+  });
+});
+
+// ─── API helpers ───
+async function api(url,body){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json()}
+
+function msg(id,text,ok){const e=document.getElementById(id);e.textContent=text;e.className='msg '+(ok?'ok':'error')}
+
+// ─── Login ───
+document.getElementById('btn-login').addEventListener('click',async()=>{
+  const u=document.getElementById('l-user').value.trim(),p=document.getElementById('l-pass').value;
+  if(!u||!p)return msg('msg-login','Please fill all fields',false);
+  const r=await api('/api/login',{username:u,password:p});
+  if(r.error)return msg('msg-login',r.error,false);
+  location.href='/game';
+});
+// Enter key
+document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('btn-login').click()});
+
+// ─── Register ───
+document.getElementById('btn-register').addEventListener('click',async()=>{
+  const u=document.getElementById('r-user').value.trim();
+  const em=document.getElementById('r-email').value.trim();
+  const p=document.getElementById('r-pass').value;
+  if(!u||!em||!p)return msg('msg-register','Please fill all fields',false);
+  if(p.length<4)return msg('msg-register','Password must be at least 4 characters',false);
+  const r=await api('/api/register',{username:u,email:em,password:p});
+  if(r.error)return msg('msg-register',r.error,false);
+  location.href='/game';
+});
+document.getElementById('r-pass').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('btn-register').click()});
+</script>
+</body>
+</html>

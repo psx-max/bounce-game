@@ -1,0 +1,15 @@
+{
+  "name": "bounce-game",
+  "version": "1.0.0",
+  "description": "弹跳球黑洞穿越 - 在线游戏",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0",
+    "sql.js": "^1.12.0"
+  }
+}
